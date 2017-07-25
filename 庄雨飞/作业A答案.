@@ -1,0 +1,75 @@
+题目一:查询收藏了两本书以上的姓名与居住的城市.
+
+SELECT uname 姓名,loc 居住城市
+from hw_user
+where
+  uid IN (SELECT uid
+          from (SELECT uid,count(uid) cu
+                FROM u_coll_bk
+                GROUP BY uid
+                HAVING cu>2)
+               result_u_coll_bk) ;
+
+
+
+
+题目二:查询年龄在三十到六十之间的用户的姓名,评论过的书籍名称
+
+SELECT hw_user.uname 用户,hw_user.uid,book.bkname 书籍
+FROM (SELECT DISTINCT bkid,com.uid
+      FROM comment com
+      WHERE com.uid IN (SELECT uid
+                        FROM (
+                               SELECT uid,uname
+                               FROM hw_user
+                               WHERE age BETWEEN 30 AND 60 ) result_age))
+  AS rbu
+  INNER JOIN book
+    ON rbu.bkid=book.bkid
+  INNER JOIN hw_user
+    ON rbu.uid=hw_user.uid;
+
+
+
+
+题目三:每个用户在2016年之前的评论数量
+
+SELECT uname 用户 FROM hw_user GROUP BY loc;
+SELECT hw_user.uname ,rdt.cc
+FROM (SELECT uid,count(uid) cc
+      FROM comment
+      WHERE datetime<'2016-01-01 00:00:00'
+      GROUP BY uid)
+  AS rdt
+  INNER JOIN hw_user
+    ON hw_user.uid=rdt.uid;
+
+
+
+
+题目四:查询刘青云评论过的书籍及评论的次数
+
+SELECT bkid,count(bkid) 评论次数
+      FROM comment
+      where uid=(SELECT uid
+                 FROM hw_user
+                 WHERE uname='刘青云')
+      GROUP BY bkid;
+
+
+
+
+题目五:查询收藏了书籍飞升之后的用户且年龄大于用户平均年龄5岁的用户的详细信息.
+
+SELECT *
+from hw_user
+where uid IN (
+  SELECT uid
+  from comment
+  where bkid=(
+    SELECT bkid
+    FROM book
+    WHERE bkname='飞升之后'))
+AND age>((
+              SELECT sum(age)/count(*)
+              FROM hw_user)+5);
